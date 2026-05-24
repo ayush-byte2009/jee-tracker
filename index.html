@@ -7,81 +7,52 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-main: #060913;
-            --sidebar-bg: #0b1120;
-            --card-bg: #111b33;
-            --panel-bg: #172447;
-            --border: #1e2e5c;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --accent-blue: #38bdf8;
-            --accent-purple: #c084fc;
-            --accent-teal: #2dd4bf;
-            --accent-red: #f87171;
-            --accent-green: #4ade80;
+            --bg-main: #060913; --sidebar-bg: #0b1120; --card-bg: #111b33; --panel-bg: #172447;
+            --border: #1e2e5c; --text-primary: #f1f5f9; --text-secondary: #94a3b8;
+            --accent-blue: #38bdf8; --accent-purple: #c084fc; --accent-teal: #2dd4bf;
+            --accent-red: #f87171; --accent-green: #4ade80;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background-color: var(--bg-main); color: var(--text-primary); display: flex; min-height: 100vh; overflow: hidden; }
-
         .sidebar { width: 260px; background-color: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; }
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; height: 100vh; padding: clamp(15px, 3vw, 35px); }
         .brand { font-size: 1.4rem; font-weight: 800; background: linear-gradient(to right, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 35px; text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-        
         .menu-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
         .menu-item { padding: 14px 18px; border-radius: 10px; color: var(--text-secondary); cursor: pointer; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 12px; }
         .menu-item:hover, .menu-item.active { background-color: var(--card-bg); color: var(--text-primary); }
         .menu-item.active { border-left: 4px solid var(--accent-blue); }
-
         .app-view { display: none; flex-direction: column; gap: 25px; }
         .app-view.active { display: flex; }
-
         .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 24px; position: relative; }
         .card-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 18px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
-
         .metrics-banner { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
         .stat-box { background: var(--panel-bg); border: 1px solid var(--border); padding: 20px; border-radius: 12px; text-align: center; }
         .stat-val { font-size: 2.2rem; font-weight: 800; margin-top: 8px; }
-
         .workspace-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 950px) { .workspace-split { grid-template-columns: 1fr; } }
-
         .form-group { margin-bottom: 16px; }
         label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 6px; }
         .input-ctrl { width: 100%; background: var(--panel-bg); border: 1px solid var(--border); padding: 12px 16px; border-radius: 8px; color: #fff; font-size: 0.95rem; outline: none; }
-        
         .subject-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .subject-field { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; text-align: center; }
         .subject-field input { width: 100%; background: transparent; border: none; font-size: 1.3rem; font-weight: 700; color: #fff; text-align: center; outline: none; }
-        
         .task-container { display: flex; flex-direction: column; gap: 10px; max-height: 420px; overflow-y: auto; }
         .task-card { background: var(--panel-bg); border: 1px solid var(--border); padding: 14px 18px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
         .task-card.done { opacity: 0.5; border-left: 4px solid var(--accent-green); }
         .task-card.done .t-text { text-decoration: line-through; }
-        
         .badge { font-size: 0.65rem; padding: 2px 8px; border-radius: 4px; font-weight: 800; text-transform: uppercase; margin-right: 4px; }
         .b-p { background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); }
         .b-c { background: rgba(192, 132, 252, 0.15); color: var(--accent-purple); }
         .b-m { background: rgba(45, 212, 191, 0.15); color: var(--accent-teal); }
-        
         .btn-set { display: flex; gap: 8px; }
         .action-btn { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.1rem; }
         .primary-btn { width: 100%; background: linear-gradient(135deg, var(--accent-blue), #2563eb); border: none; padding: 14px; border-radius: 8px; color: #fff; font-weight: 700; cursor: pointer; }
-        
         .sync-status { position: absolute; top: 20px; right: 20px; font-size: 0.8rem; padding: 4px 10px; border-radius: 20px; background: #232d42; color: #fff; }
-
-        @media (max-width: 680px) {
-            body { flex-direction: column; }
-            .sidebar { width: 100%; height: auto; padding: 10px; }
-            .brand { margin-bottom: 10px; padding-bottom: 5px; }
-            .menu-list { flex-direction: row; justify-content: space-around; }
-            .main-content { height: calc(100vh - 120px); }
-        }
+        @media (max-width: 680px) { body { flex-direction: column; } .sidebar { width: 100%; height: auto; padding: 10px; } .brand { margin-bottom: 10px; padding-bottom: 5px; } .menu-list { flex-direction: row; justify-content: space-around; } .main-content { height: calc(100vh - 120px); } }
         .chart-frame { position: relative; height: 300px; width: 100%; }
     </style>
 </head>
 <body>
-
     <div class="sidebar">
         <div class="brand">JEE CLOUD SYSTEM</div>
         <ul class="menu-list">
@@ -90,72 +61,41 @@
             <li class="menu-item" onclick="switchView('analytics-view', this); renderChart();">📈 Trends</li>
         </ul>
     </div>
-
     <div class="main-content">
-        <!-- MODULE 1: MAIN WORKSPACE -->
         <div id="dashboard-view" class="app-view active">
             <div class="card" style="background: linear-gradient(135deg, #0f172a, var(--card-bg));">
-                <span id="sync-indicator" class="sync-status">Syncing Active...</span>
-                <h2 id="live-date-banner">Connecting Server...</h2>
+                <span id="sync-indicator" class="sync-status">Connecting...</span>
+                <h2 id="live-date-banner">Initializing System...</h2>
                 <p style="color: var(--accent-blue); font-weight: 600; margin-top: 4px; font-size: 0.9rem;">CROSS-DEVICE CLOUD ACTIVE</p>
             </div>
-
             <div class="metrics-banner">
-                <div class="stat-box" style="border-bottom: 3px solid var(--accent-blue);">
-                    <label>⚡ Net Study Hours</label>
-                    <div id="m-net" class="stat-val" style="color: var(--accent-blue);">0.0h</div>
-                </div>
-                <div class="stat-box" style="border-bottom: 3px solid var(--accent-purple);">
-                    <label>🎯 Targets Left</label>
-                    <div id="m-tasks" class="stat-val" style="color: var(--accent-purple);">0/0</div>
-                </div>
+                <div class="stat-box" style="border-bottom: 3px solid var(--accent-blue);"><label>⚡ Net Study Hours</label><div id="m-net" class="stat-val" style="color: var(--accent-blue);">0.0h</div></div>
+                <div class="stat-box" style="border-bottom: 3px solid var(--accent-purple);"><label>🎯 Targets Left</label><div id="m-tasks" class="stat-val" style="color: var(--accent-purple);">0/0</div></div>
             </div>
-
             <div class="workspace-split">
                 <div class="card">
                     <div class="card-title">⏳ Subject Study Timers</div>
                     <div class="form-group">
                         <div class="subject-grid">
-                            <div class="subject-field">
-                                <label style="color: var(--accent-blue);">Physics</label>
-                                <input type="number" id="h-p" min="0" step="0.5" value="0" onchange="updateDailyHours()">
-                            </div>
-                            <div class="subject-field">
-                                <label style="color: var(--accent-purple);">Chemistry</label>
-                                <input type="number" id="h-c" min="0" step="0.5" value="0" onchange="updateDailyHours()">
-                            </div>
-                            <div class="subject-field">
-                                <label style="color: var(--accent-teal);">Math</label>
-                                <input type="number" id="h-m" min="0" step="0.5" value="0" onchange="updateDailyHours()">
-                            </div>
+                            <div class="subject-field"><label style="color: var(--accent-blue);">Physics</label><input type="number" id="h-p" min="0" step="0.5" value="0" onchange="updateDailyHours()"></div>
+                            <div class="subject-field"><label style="color: var(--accent-purple);">Chemistry</label><input type="number" id="h-c" min="0" step="0.5" value="0" onchange="updateDailyHours()"></div>
+                            <div class="subject-field"><label style="color: var(--accent-teal);">Math</label><input type="number" id="h-m" min="0" step="0.5" value="0" onchange="updateDailyHours()"></div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>📱 Distraction Loss (Minutes)</label>
-                        <input type="number" id="h-dist" class="input-ctrl" min="0" value="0" onchange="updateDailyHours()">
-                    </div>
+                    <div class="form-group"><label>📱 Distraction Loss (Minutes)</label><input type="number" id="h-dist" class="input-ctrl" min="0" value="0" onchange="updateDailyHours()"></div>
                 </div>
-
                 <div class="card">
                     <div class="card-title">📌 Today's Targets <span style="font-size:0.75rem; color:var(--text-secondary);">With Carry-Forwards</span></div>
                     <div class="task-container" id="dash-task-list"></div>
                 </div>
             </div>
         </div>
-
-        <!-- MODULE 2: PIPELINE BUILDER -->
         <div id="planner-view" class="app-view">
             <div class="workspace-split" style="grid-template-columns: 1fr 1.3fr;">
                 <div class="card">
                     <div class="card-title">✨ Create Target Blueprint</div>
-                    <div class="form-group">
-                        <label>Task Description</label>
-                        <input type="text" id="p-text" class="input-ctrl" placeholder="e.g., Complete 30 PYQs of Kinematics">
-                    </div>
-                    <div class="form-group">
-                        <label>Target Execution Date</label>
-                        <input type="date" id="p-date" class="input-ctrl">
-                    </div>
+                    <div class="form-group"><label>Task Description</label><input type="text" id="p-text" class="input-ctrl" placeholder="e.g., Complete 30 PYQs of Kinematics"></div>
+                    <div class="form-group"><label>Target Execution Date</label><input type="date" id="p-date" class="input-ctrl"></div>
                     <div class="form-group">
                         <label>Core Parameters</label>
                         <div class="subject-grid">
@@ -165,23 +105,20 @@
                     </div>
                     <button class="primary-btn" onclick="addNewTask()">Deploy Target</button>
                 </div>
-
                 <div class="card">
                     <div class="card-title">📁 Full Database Task Manifest</div>
                     <div class="task-container" id="master-manifest-list"></div>
                 </div>
             </div>
         </div>
-
-        <!-- MODULE 3: ANALYTICS -->
         <div id="analytics-view" class="app-view">
             <div class="card"><div class="chart-frame"><canvas id="perfChart"></canvas></div></div>
         </div>
     </div>
 
     <script>
-        // Paste your exact newly deployed web app URL between the quotes below
-        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxzz30UE6LF8saNB63FPIzt0ZAhKUrCqFYSIEj2n6OAgO3uFTDWGAzr7uTZsvyF1XOo4Q/exec"; 
+        // PASTE YOUR NEW LINK HERE. DO NOT REMOVE THE QUOTATION MARKS.
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbzNvqphKEd24uy_X8CH4Sq06Nl_LL4B5Ru7SOnOLUjfCs8vl66sW9Kmp2N-yRnELTZHlQ/exec"; 
 
         let globalState = { metrics: [], tasks: [] };
         let todayStr = new Date().toISOString().split('T')[0];
@@ -200,21 +137,20 @@
             el.classList.add('active');
         }
 
-        // --- THE UNBREAKABLE CONNECTION ENGINE ---
+        // Failsafe Data Loader
         function fetchCloudState() {
-            showStatus("Loading Parameters...");
-            
-            // Generate a dynamic script tag to securely pull your sheets data down
-            const oldScript = document.getElementById('jsonp-sync-script');
-            if(oldScript) oldScript.remove();
-
+            showStatus("Fetching Database...");
             const script = document.createElement('script');
-            script.id = 'jsonp-sync-script';
             script.src = `${CLOUD_URL}?action=getData&callback=processCloudResponse`;
+            
+            // If Brave blocks it or link is broken, it triggers this instantly instead of hanging
+            script.onerror = function() {
+                showStatus("⚠️ Blocked by Brave Shields. Turn OFF the Lion icon.", true);
+                document.getElementById('live-date-banner').innerText = "Connection Blocked by Browser";
+            };
             document.body.appendChild(script);
         }
 
-        // This function intercepts and handles the cloud data smoothly
         function processCloudResponse(data) {
             globalState.metrics = data.metrics || [];
             globalState.tasks = data.tasks || [];
@@ -224,72 +160,60 @@
         }
 
         function pushCloudState() {
-            showStatus("Saving to Cloud...");
-            
-            // Send data using text formatting which completely drops browser security errors
+            showStatus("Saving...");
             fetch(CLOUD_URL, {
                 method: "POST",
                 mode: "no-cors",
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({ action: "saveAll", metrics: globalState.metrics, tasks: globalState.tasks })
             }).then(() => {
-                setTimeout(() => { showStatus("Saved to Cloud ✓"); }, 1000);
-            }).catch(() => showStatus("Save Failed", true));
+                setTimeout(() => { showStatus("All Synced ✓"); }, 800);
+            }).catch(() => showStatus("Save Error", true));
         }
 
         function showStatus(text, error=false) {
             const el = document.getElementById('sync-indicator');
             el.innerText = text;
-            el.style.background = error ? var(--accent-red) : "#232d42";
+            el.style.background = error ? "var(--accent-red)" : "#232d42";
         }
 
-        // --- USER CONFIGURATION METHODS ---
         function loadTodayInputs() {
-            const todayMetric = globalState.metrics.find(m => m.date === todayStr);
-            if(todayMetric) {
-                document.getElementById('h-p').value = todayMetric.p;
-                document.getElementById('h-c').value = todayMetric.c;
-                document.getElementById('h-m').value = todayMetric.m;
-                document.getElementById('h-dist').value = todayMetric.distraction;
+            const m = globalState.metrics.find(x => x.date === todayStr);
+            if(m) {
+                document.getElementById('h-p').value = m.p;
+                document.getElementById('h-c').value = m.c;
+                document.getElementById('h-m').value = m.m;
+                document.getElementById('h-dist').value = m.distraction;
             }
             calculateMetrics();
         }
 
         function updateDailyHours() {
-            let hp = parseFloat(document.getElementById('h-p').value) || 0;
-            let hc = parseFloat(document.getElementById('h-c').value) || 0;
-            let hm = parseFloat(document.getElementById('h-m').value) || 0;
-            let dist = parseFloat(document.getElementById('h-dist').value) || 0;
-
-            let index = globalState.metrics.findIndex(m => m.date === todayStr);
+            const hp = parseFloat(document.getElementById('h-p').value) || 0;
+            const hc = parseFloat(document.getElementById('h-c').value) || 0;
+            const hm = parseFloat(document.getElementById('h-m').value) || 0;
+            const dist = parseFloat(document.getElementById('h-dist').value) || 0;
+            let idx = globalState.metrics.findIndex(x => x.date === todayStr);
             const entry = { date: todayStr, p: hp, c: hc, m: hm, distraction: dist };
-            
-            if(index > -1) globalState.metrics[index] = entry;
-            else globalState.metrics.push(entry);
-
+            if(idx > -1) globalState.metrics[idx] = entry; else globalState.metrics.push(entry);
             calculateMetrics();
             pushCloudState();
         }
 
         function calculateMetrics() {
-            const m = globalState.metrics.find(m => m.date === todayStr) || {p:0, c:0, m:0, distraction:0};
-            const gross = m.p + m.c + m.m;
-            let net = gross - (m.distraction / 60);
+            const m = globalState.metrics.find(x => x.date === todayStr) || {p:0, c:0, m:0, distraction:0};
+            const net = (m.p + m.c + m.m) - (m.distraction / 60);
             document.getElementById('m-net').innerText = (net > 0 ? net.toFixed(1) : "0.0") + "h";
         }
 
         function addNewTask() {
             const txt = document.getElementById('p-text').value.trim();
-            const date = document.getElementById('p-date').value;
-            const sub = document.getElementById('p-sub').value;
-            const cat = document.getElementById('p-cat').value;
-
             if(!txt) return;
-
-            const newTask = { id: Date.now(), text: txt, date: date, subject: sub, category: cat, completed: false };
-            globalState.tasks.push(newTask);
+            globalState.tasks.push({ 
+                id: Date.now(), text: txt, date: document.getElementById('p-date').value, 
+                subject: document.getElementById('p-sub').value, category: document.getElementById('p-cat').value, completed: false 
+            });
             document.getElementById('p-text').value = "";
-            
             renderTasks();
             pushCloudState();
         }
@@ -298,74 +222,36 @@
             const dash = document.getElementById('dash-task-list');
             const master = document.getElementById('master-manifest-list');
             dash.innerHTML = ""; master.innerHTML = "";
-
-            let pendingDashCount = 0, totalDashCount = 0;
+            let pending = 0, total = 0;
 
             globalState.tasks.forEach(t => {
-                const ui = `
-                    <div>
-                        <span class="t-text">${t.text}</span>
-                        <div style="margin-top:4px;"><span class="badge b-${t.subject}">${t.subject}</span><span class="badge" style="background:#223">${t.category}</span></div>
-                    </div>
-                    <div class="btn-set">
-                        <button class="action-btn" onclick="toggleTask(${t.id})">✔️</button>
-                        <button class="action-btn" onclick="deleteTask(${t.id})">🗑️</button>
-                    </div>
-                `;
-
-                const mDiv = document.createElement('div'); mDiv.className = `task-card ${t.completed?'done':''}`;
-                mDiv.innerHTML = ui; master.appendChild(mDiv);
-
-                const isToday = t.date === todayStr;
-                const isCarryForward = t.date < todayStr && !t.completed;
-
-                if(isToday || isCarryForward) {
-                    totalDashCount++;
-                    if(!t.completed) pendingDashCount++;
-
+                const ui = `<div><span class="t-text">${t.text}</span><div style="margin-top:4px;"><span class="badge b-${t.subject}">${t.subject}</span><span class="badge" style="background:#223">${t.category}</span></div></div><div class="btn-set"><button class="action-btn" onclick="toggleTask(${t.id})">✔️</button><button class="action-btn" onclick="deleteTask(${t.id})">🗑️</button></div>`;
+                const mDiv = document.createElement('div'); mDiv.className = `task-card ${t.completed?'done':''}`; mDiv.innerHTML = ui; master.appendChild(mDiv);
+                
+                if(t.date === todayStr || (t.date < todayStr && !t.completed)) {
+                    total++; if(!t.completed) pending++;
                     const dDiv = document.createElement('div'); dDiv.className = `task-card ${t.completed?'done':''}`;
-                    if(isCarryForward) dDiv.style.borderRight = "4px dashed var(--accent-red)";
+                    if(t.date < todayStr && !t.completed) dDiv.style.borderRight = "4px dashed var(--accent-red)";
                     dDiv.innerHTML = ui; dash.appendChild(dDiv);
                 }
             });
-
-            document.getElementById('m-tasks').innerText = `${pendingDashCount}/${totalDashCount}`;
+            document.getElementById('m-tasks').innerText = `${pending}/${total}`;
         }
 
-        function toggleTask(id) {
-            let t = globalState.tasks.find(x => x.id === id);
-            if(t) t.completed = !t.completed;
-            renderTasks();
-            pushCloudState();
-        }
-
-        function deleteTask(id) {
-            globalState.tasks = globalState.tasks.filter(x => x.id !== id);
-            renderTasks();
-            pushCloudState();
-        }
-
+        function toggleTask(id) { let t = globalState.tasks.find(x => x.id === id); if(t) t.completed = !t.completed; renderTasks(); pushCloudState(); }
+        function deleteTask(id) { globalState.tasks = globalState.tasks.filter(x => x.id !== id); renderTasks(); pushCloudState(); }
+        
         function renderChart() {
             const ctx = document.getElementById('perfChart').getContext('2d');
-            const subset = globalState.metrics.slice(-7);
-            
-            const labels = subset.map(x => x.date);
-            const pData = subset.map(x => x.p);
-            const cData = subset.map(x => x.c);
-            const mData = subset.map(x => x.m);
-
+            const sub = globalState.metrics.slice(-7);
             if(chartInstance) chartInstance.destroy();
-
             chartInstance = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Physics', data: pData, backgroundColor: '#38bdf8' },
-                        { label: 'Chemistry', data: cData, backgroundColor: '#c084fc' },
-                        { label: 'Mathematics', data: mData, backgroundColor: '#2dd4bf' }
-                    ]
-                },
+                data: { labels: sub.map(x=>x.date), datasets: [
+                    { label: 'Physics', data: sub.map(x=>x.p), backgroundColor: '#38bdf8' },
+                    { label: 'Chemistry', data: sub.map(x=>x.c), backgroundColor: '#c084fc' },
+                    { label: 'Mathematics', data: sub.map(x=>x.m), backgroundColor: '#2dd4bf' }
+                ]},
                 options: { responsive: true, maintainAspectRatio: false, scales: { x: {stacked:true}, y: {stacked:true} } }
             });
         }
