@@ -78,9 +78,6 @@
             .main-content { height: calc(100vh - 120px); }
         }
         .chart-frame { position: relative; height: 300px; width: 100%; }
-        
-        /* Hidden layout panel to submit logs seamlessly without security errors */
-        #hidden-form-bridge { display: none; }
     </style>
 </head>
 <body>
@@ -95,7 +92,7 @@
     </div>
 
     <div class="main-content">
-        <!-- MODULE 1: CORE WORKSPACE -->
+        <!-- MODULE 1: MAIN WORKSPACE -->
         <div id="dashboard-view" class="app-view active">
             <div class="card" style="background: linear-gradient(135deg, #0f172a, var(--card-bg));">
                 <span id="sync-indicator" class="sync-status">Syncing Active...</span>
@@ -137,7 +134,6 @@
                         <label>📱 Distraction Loss (Minutes)</label>
                         <input type="number" id="h-dist" class="input-ctrl" min="0" value="0" onchange="updateDailyHours()">
                     </div>
-                    <button class="primary-btn" style="margin-top:10px; background:var(--accent-green);" onclick="commitGlobalStateSync()">Force Sync Data to Cloud</button>
                 </div>
 
                 <div class="card">
@@ -147,7 +143,7 @@
             </div>
         </div>
 
-        <!-- MODULE 2: PIPELINE AND SCHEDULER -->
+        <!-- MODULE 2: PIPELINE BUILDER -->
         <div id="planner-view" class="app-view">
             <div class="workspace-split" style="grid-template-columns: 1fr 1.3fr;">
                 <div class="card">
@@ -177,21 +173,15 @@
             </div>
         </div>
 
-        <!-- MODULE 3: HISTORICAL ANALYSIS -->
+        <!-- MODULE 3: ANALYTICS -->
         <div id="analytics-view" class="app-view">
             <div class="card"><div class="chart-frame"><canvas id="perfChart"></canvas></div></div>
         </div>
     </div>
 
-    <!-- Hidden Submission Form Bridge to bypass CORS errors securely -->
-    <form id="hidden-form-bridge" method="POST" target="form-target-frame">
-        <input type="hidden" name="payload" id="form-payload-field">
-    </form>
-    <iframe name="form-target-frame" style="display:none;"></iframe>
-
     <script>
-        // Paste your exact deployed script URL here inside the quotes
-        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbzoaJ9jLPc5LAb74vasxv_I-ByvM5F9PIZKGBu2CKhd7zDjlEFDJzAgwsp8HP7sYnA3oA/exec"; 
+        // Paste your exact newly deployed web app URL between the quotes below
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxzz30UE6LF8saNB63FPIzt0ZAhKUrCqFYSIEj2n6OAgO3uFTDWGAzr7uTZsvyF1XOo4Q/exec"; 
 
         let globalState = { metrics: [], tasks: [] };
         let todayStr = new Date().toISOString().split('T')[0];
@@ -210,15 +200,21 @@
             el.classList.add('active');
         }
 
-        // Clean background pipeline function to parse data structures
+        // --- THE UNBREAKABLE CONNECTION ENGINE ---
         function fetchCloudState() {
-            showStatus("Loading...");
-            const scriptElement = document.createElement('script');
-            scriptElement.src = `${CLOUD_URL}?action=getData&callback=processCloudResponse`;
-            document.body.appendChild(scriptElement);
-            document.body.removeChild(scriptElement);
+            showStatus("Loading Parameters...");
+            
+            // Generate a dynamic script tag to securely pull your sheets data down
+            const oldScript = document.getElementById('jsonp-sync-script');
+            if(oldScript) oldScript.remove();
+
+            const script = document.createElement('script');
+            script.id = 'jsonp-sync-script';
+            script.src = `${CLOUD_URL}?action=getData&callback=processCloudResponse`;
+            document.body.appendChild(script);
         }
 
+        // This function intercepts and handles the cloud data smoothly
         function processCloudResponse(data) {
             globalState.metrics = data.metrics || [];
             globalState.tasks = data.tasks || [];
@@ -227,17 +223,18 @@
             showStatus("All Synced ✓");
         }
 
-        function commitGlobalStateSync() {
-            showStatus("Syncing to Cloud...");
-            const form = document.getElementById('hidden-form-bridge');
-            form.action = CLOUD_URL;
-            document.getElementById('form-payload-field').value = JSON.stringify({
-                action: "saveAll",
-                metrics: globalState.metrics,
-                tasks: globalState.tasks
-            });
-            form.submit();
-            setTimeout(() => { showStatus("Saved to Cloud ✓"); }, 1500);
+        function pushCloudState() {
+            showStatus("Saving to Cloud...");
+            
+            // Send data using text formatting which completely drops browser security errors
+            fetch(CLOUD_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: "saveAll", metrics: globalState.metrics, tasks: globalState.tasks })
+            }).then(() => {
+                setTimeout(() => { showStatus("Saved to Cloud ✓"); }, 1000);
+            }).catch(() => showStatus("Save Failed", true));
         }
 
         function showStatus(text, error=false) {
@@ -246,6 +243,7 @@
             el.style.background = error ? var(--accent-red) : "#232d42";
         }
 
+        // --- USER CONFIGURATION METHODS ---
         function loadTodayInputs() {
             const todayMetric = globalState.metrics.find(m => m.date === todayStr);
             if(todayMetric) {
@@ -270,7 +268,7 @@
             else globalState.metrics.push(entry);
 
             calculateMetrics();
-            commitGlobalStateSync();
+            pushCloudState();
         }
 
         function calculateMetrics() {
@@ -293,7 +291,7 @@
             document.getElementById('p-text').value = "";
             
             renderTasks();
-            commitGlobalStateSync();
+            pushCloudState();
         }
 
         function renderTasks() {
@@ -338,13 +336,13 @@
             let t = globalState.tasks.find(x => x.id === id);
             if(t) t.completed = !t.completed;
             renderTasks();
-            commitGlobalStateSync();
+            pushCloudState();
         }
 
         function deleteTask(id) {
             globalState.tasks = globalState.tasks.filter(x => x.id !== id);
             renderTasks();
-            commitGlobalStateSync();
+            pushCloudState();
         }
 
         function renderChart() {
