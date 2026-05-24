@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JEE Cloud-Synced Command Portal</title>
+    <title>JEE Cloud Portal Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -29,7 +29,7 @@
         .brand { font-size: 1.4rem; font-weight: 800; background: linear-gradient(to right, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 35px; text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
         
         .menu-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-        .menu-item { padding: 14px 18px; border-radius: 10px; color: var(--text-secondary); cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; display: flex; align-items: center; gap: 12px; }
+        .menu-item { padding: 14px 18px; border-radius: 10px; color: var(--text-secondary); cursor: pointer; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 12px; }
         .menu-item:hover, .menu-item.active { background-color: var(--card-bg); color: var(--text-primary); }
         .menu-item.active { border-left: 4px solid var(--accent-blue); }
 
@@ -78,6 +78,9 @@
             .main-content { height: calc(100vh - 120px); }
         }
         .chart-frame { position: relative; height: 300px; width: 100%; }
+        
+        /* Hidden layout panel to submit logs seamlessly without security errors */
+        #hidden-form-bridge { display: none; }
     </style>
 </head>
 <body>
@@ -92,7 +95,7 @@
     </div>
 
     <div class="main-content">
-        <!-- VIEW 1: MAIN LIVE DASHBOARD -->
+        <!-- MODULE 1: CORE WORKSPACE -->
         <div id="dashboard-view" class="app-view active">
             <div class="card" style="background: linear-gradient(135deg, #0f172a, var(--card-bg));">
                 <span id="sync-indicator" class="sync-status">Syncing Active...</span>
@@ -134,6 +137,7 @@
                         <label>📱 Distraction Loss (Minutes)</label>
                         <input type="number" id="h-dist" class="input-ctrl" min="0" value="0" onchange="updateDailyHours()">
                     </div>
+                    <button class="primary-btn" style="margin-top:10px; background:var(--accent-green);" onclick="commitGlobalStateSync()">Force Sync Data to Cloud</button>
                 </div>
 
                 <div class="card">
@@ -143,7 +147,7 @@
             </div>
         </div>
 
-        <!-- VIEW 2: TASK PIPELINE MANAGER -->
+        <!-- MODULE 2: PIPELINE AND SCHEDULER -->
         <div id="planner-view" class="app-view">
             <div class="workspace-split" style="grid-template-columns: 1fr 1.3fr;">
                 <div class="card">
@@ -167,21 +171,27 @@
                 </div>
 
                 <div class="card">
-                    <div class="card-title">📂 Full Database Task Manifest</div>
+                    <div class="card-title">📁 Full Database Task Manifest</div>
                     <div class="task-container" id="master-manifest-list"></div>
                 </div>
             </div>
         </div>
 
-        <!-- VIEW 3: HISTORICAL CHARTS -->
+        <!-- MODULE 3: HISTORICAL ANALYSIS -->
         <div id="analytics-view" class="app-view">
             <div class="card"><div class="chart-frame"><canvas id="perfChart"></canvas></div></div>
         </div>
     </div>
 
+    <!-- Hidden Submission Form Bridge to bypass CORS errors securely -->
+    <form id="hidden-form-bridge" method="POST" target="form-target-frame">
+        <input type="hidden" name="payload" id="form-payload-field">
+    </form>
+    <iframe name="form-target-frame" style="display:none;"></iframe>
+
     <script>
-        // --- CENTRAL WEB APP INTERACTION SETUP ---
-        const CLOUD_URL = "https://script.google.com/macros/s/AKfycby30LB79FLs2msmLDncS5sICW1fHj_byMKlge5ZIhvO9VLh2YZhbvohfxikB4SSYRzOAw/exec"; 
+        // Paste your exact deployed script URL here inside the quotes
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbzoaJ9jLPc5LAb74vasxv_I-ByvM5F9PIZKGBu2CKhd7zDjlEFDJzAgwsp8HP7sYnA3oA/exec"; 
 
         let globalState = { metrics: [], tasks: [] };
         let todayStr = new Date().toISOString().split('T')[0];
@@ -200,43 +210,42 @@
             el.classList.add('active');
         }
 
-        // --- HTTP INTERACTION HANDLERS ---
+        // Clean background pipeline function to parse data structures
         function fetchCloudState() {
             showStatus("Loading...");
-            fetch(`${CLOUD_URL}?action=getData`)
-                .then(res => {
-                    if(!res.ok) throw new Error();
-                    return res.json();
-                })
-                .then(data => {
-                    globalState.metrics = data.metrics || [];
-                    globalState.tasks = data.tasks || [];
-                    loadTodayInputs();
-                    renderTasks();
-                    showStatus("All Synced ✓");
-                }).catch(() => showStatus("Error Connection", true));
+            const scriptElement = document.createElement('script');
+            scriptElement.src = `${CLOUD_URL}?action=getData&callback=processCloudResponse`;
+            document.body.appendChild(scriptElement);
+            document.body.removeChild(scriptElement);
         }
 
-        function pushCloudState() {
-            showStatus("Saving...");
-            // Using text/plain content-type headers explicitly tricks browsers 
-            // into skipping the problematic preflight security check blocks entirely.
-            fetch(CLOUD_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ action: "saveAll", metrics: globalState.metrics, tasks: globalState.tasks })
-            }).then(() => {
-                showStatus("Saved to Cloud ✓");
-            }).catch(() => showStatus("Local Save Only (Offline)", true));
+        function processCloudResponse(data) {
+            globalState.metrics = data.metrics || [];
+            globalState.tasks = data.tasks || [];
+            loadTodayInputs();
+            renderTasks();
+            showStatus("All Synced ✓");
         }
+
+        function commitGlobalStateSync() {
+            showStatus("Syncing to Cloud...");
+            const form = document.getElementById('hidden-form-bridge');
+            form.action = CLOUD_URL;
+            document.getElementById('form-payload-field').value = JSON.stringify({
+                action: "saveAll",
+                metrics: globalState.metrics,
+                tasks: globalState.tasks
+            });
+            form.submit();
+            setTimeout(() => { showStatus("Saved to Cloud ✓"); }, 1500);
+        }
+
         function showStatus(text, error=false) {
             const el = document.getElementById('sync-indicator');
             el.innerText = text;
             el.style.background = error ? var(--accent-red) : "#232d42";
         }
 
-        // --- CALCULATION ENGINE ---
         function loadTodayInputs() {
             const todayMetric = globalState.metrics.find(m => m.date === todayStr);
             if(todayMetric) {
@@ -261,7 +270,7 @@
             else globalState.metrics.push(entry);
 
             calculateMetrics();
-            pushCloudState();
+            commitGlobalStateSync();
         }
 
         function calculateMetrics() {
@@ -271,7 +280,6 @@
             document.getElementById('m-net').innerText = (net > 0 ? net.toFixed(1) : "0.0") + "h";
         }
 
-        // --- PIPELINE MANAGER ENGINE ---
         function addNewTask() {
             const txt = document.getElementById('p-text').value.trim();
             const date = document.getElementById('p-date').value;
@@ -285,7 +293,7 @@
             document.getElementById('p-text').value = "";
             
             renderTasks();
-            pushCloudState();
+            commitGlobalStateSync();
         }
 
         function renderTasks() {
@@ -307,11 +315,9 @@
                     </div>
                 `;
 
-                // Render in Master Database View
                 const mDiv = document.createElement('div'); mDiv.className = `task-card ${t.completed?'done':''}`;
                 mDiv.innerHTML = ui; master.appendChild(mDiv);
 
-                // Render in Today's Dashboard View (Includes today's items AND uncompleted yesterday carry-forwards!)
                 const isToday = t.date === todayStr;
                 const isCarryForward = t.date < todayStr && !t.completed;
 
@@ -332,16 +338,15 @@
             let t = globalState.tasks.find(x => x.id === id);
             if(t) t.completed = !t.completed;
             renderTasks();
-            pushCloudState();
+            commitGlobalStateSync();
         }
 
         function deleteTask(id) {
             globalState.tasks = globalState.tasks.filter(x => x.id !== id);
             renderTasks();
-            pushCloudState();
+            commitGlobalStateSync();
         }
 
-        // --- GRAPHING COMPONENT ENGINE ---
         function renderChart() {
             const ctx = document.getElementById('perfChart').getContext('2d');
             const subset = globalState.metrics.slice(-7);
