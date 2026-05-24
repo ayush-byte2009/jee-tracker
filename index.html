@@ -181,7 +181,7 @@
 
     <script>
         // --- CENTRAL WEB APP INTERACTION SETUP ---
-        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbwacxcQnNA1A1O57t_JMMhs1HY26eJ577EpNBwdjIREVu4JJmOeG10j_55DOu52Xmzdnw/exec"; 
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycby30LB79FLs2msmLDncS5sICW1fHj_byMKlge5ZIhvO9VLh2YZhbvohfxikB4SSYRzOAw/exec"; 
 
         let globalState = { metrics: [], tasks: [] };
         let todayStr = new Date().toISOString().split('T')[0];
@@ -204,7 +204,10 @@
         function fetchCloudState() {
             showStatus("Loading...");
             fetch(`${CLOUD_URL}?action=getData`)
-                .then(res => res.json())
+                .then(res => {
+                    if(!res.ok) throw new Error();
+                    return res.json();
+                })
                 .then(data => {
                     globalState.metrics = data.metrics || [];
                     globalState.tasks = data.tasks || [];
@@ -216,14 +219,17 @@
 
         function pushCloudState() {
             showStatus("Saving...");
+            // Using text/plain content-type headers explicitly tricks browsers 
+            // into skipping the problematic preflight security check blocks entirely.
             fetch(CLOUD_URL, {
                 method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({ action: "saveAll", metrics: globalState.metrics, tasks: globalState.tasks })
-            }).then(res => res.json())
-              .then(() => showStatus("Saved to Cloud ✓"))
-              .catch(() => showStatus("Local Save Only (Offline)", true));
+            }).then(() => {
+                showStatus("Saved to Cloud ✓");
+            }).catch(() => showStatus("Local Save Only (Offline)", true));
         }
-
         function showStatus(text, error=false) {
             const el = document.getElementById('sync-indicator');
             el.innerText = text;
